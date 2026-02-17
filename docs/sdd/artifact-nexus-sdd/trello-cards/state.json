@@ -1,0 +1,251 @@
+{
+  "feature": "artifact-nexus",
+  "version": "1.0",
+  "generated": "2026-02-17T23:59:00Z",
+  "status": "sdd_complete",
+  "phases": {
+    "phase_1": {
+      "name": "Core Scaffolding",
+      "cards": 7,
+      "done": 0,
+      "sp_total": 16,
+      "sp_done": 0
+    },
+    "phase_2": {
+      "name": "Ingestion & Stream",
+      "cards": 8,
+      "done": 0,
+      "sp_total": 18,
+      "sp_done": 0
+    },
+    "phase_3": {
+      "name": "Cognitive Engine",
+      "cards": 7,
+      "done": 0,
+      "sp_total": 14,
+      "sp_done": 0
+    }
+  },
+  "cards": [
+    {
+      "id": "AN-01",
+      "title": "Project Bootstrap",
+      "sp": 2,
+      "phase": 1,
+      "status": "todo",
+      "depends_on": [],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-02",
+      "title": "Database Schema Design",
+      "sp": 3,
+      "phase": 1,
+      "status": "todo",
+      "depends_on": ["AN-01"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-03",
+      "title": "DatabaseManager Class",
+      "sp": 3,
+      "phase": 1,
+      "status": "todo",
+      "depends_on": ["AN-02"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-04",
+      "title": "Static 3-Pane Layout",
+      "sp": 3,
+      "phase": 1,
+      "status": "todo",
+      "depends_on": ["AN-03"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-05",
+      "title": "Filter Pane Component",
+      "sp": 2,
+      "phase": 1,
+      "status": "todo",
+      "depends_on": ["AN-04"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-06",
+      "title": "Session Card Component",
+      "sp": 2,
+      "phase": 1,
+      "status": "todo",
+      "depends_on": ["AN-04"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-07",
+      "title": "Inspector Pane Shell",
+      "sp": 1,
+      "phase": 1,
+      "status": "todo",
+      "depends_on": ["AN-04"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-08",
+      "title": "Codex JSONL Parser",
+      "sp": 3,
+      "phase": 2,
+      "status": "todo",
+      "depends_on": ["AN-07"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-09",
+      "title": "Qwen JSONL Parser",
+      "sp": 2,
+      "phase": 2,
+      "status": "todo",
+      "depends_on": ["AN-07"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-10",
+      "title": "Kimi JSONL Parser",
+      "sp": 2,
+      "phase": 2,
+      "status": "todo",
+      "depends_on": ["AN-07"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-11",
+      "title": "Gemini JSON Parser",
+      "sp": 2,
+      "phase": 2,
+      "status": "todo",
+      "depends_on": ["AN-07"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-12",
+      "title": "SessionScanner",
+      "sp": 3,
+      "phase": 2,
+      "status": "todo",
+      "depends_on": ["AN-08", "AN-09", "AN-10", "AN-11"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-13",
+      "title": "Watcher Service (30s polling)",
+      "sp": 2,
+      "phase": 2,
+      "status": "todo",
+      "depends_on": ["AN-12"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-14",
+      "title": "Filter Logic (SQL)",
+      "sp": 2,
+      "phase": 2,
+      "status": "todo",
+      "depends_on": ["AN-13"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-15",
+      "title": "Fuzzy Search (rapidfuzz)",
+      "sp": 2,
+      "phase": 2,
+      "status": "todo",
+      "depends_on": ["AN-14"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-16",
+      "title": "chains.yaml Parser",
+      "sp": 2,
+      "phase": 3,
+      "status": "todo",
+      "depends_on": ["AN-15"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-17",
+      "title": "CognitiveRouter Class",
+      "sp": 3,
+      "phase": 3,
+      "status": "todo",
+      "depends_on": ["AN-16"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-18",
+      "title": "Fallback Chain Logic",
+      "sp": 3,
+      "phase": 3,
+      "status": "todo",
+      "depends_on": ["AN-17"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-19",
+      "title": "Chat UI Component",
+      "sp": 2,
+      "phase": 3,
+      "status": "todo",
+      "depends_on": ["AN-18"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-20",
+      "title": "Context Loader",
+      "sp": 2,
+      "phase": 3,
+      "status": "todo",
+      "depends_on": ["AN-19"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-21",
+      "title": "Multi-Session Selection",
+      "sp": 1,
+      "phase": 3,
+      "status": "todo",
+      "depends_on": ["AN-06"],
+      "started_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "AN-22",
+      "title": "Audit Logging",
+      "sp": 1,
+      "phase": 3,
+      "status": "todo",
+      "depends_on": ["AN-20"],
+      "started_at": null,
+      "completed_at": null
+    }
+  ]
+}
