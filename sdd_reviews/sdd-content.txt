@@ -1,0 +1,691 @@
+# Artifact Nexus SDD Package
+
+
+## FILE: README.md
+
+# Artifact Nexus - SDD Requirements
+
+> Status: READY FOR IMPLEMENTATION | All gaps filled | Generated: February 17, 2026
+
+## Overview
+
+This folder contains Spec-Driven Development (SDD) documentation for the **Artifact Nexus** feature.
+
+**Artifact Nexus** — терминальная платформа для разработчиков, работающих с несколькими AI-агентами (Codex, Qwen, Kimi, Gemini). Даёт единую временную шкалу всех сессий + AI-поиск через Cognitive Router с fallback chain.
+
+## Documents
+
+| File | Description | Status |
+|------|-------------|--------|
+| [requirements.md](./requirements.md) | Functional requirements | ✅ COMPLETE |
+| [ui-flow.md](./ui-flow.md) | User interaction flow | ✅ COMPLETE |
+| [gaps.md](./gaps.md) | Interview questions & answers | ✅ COMPLETE |
+| [manual-e2e-test.md](./manual-e2e-test.md) | E2E test scenarios | ✅ COMPLETE |
+| [trello-cards/](./trello-cards/) | Executable Trello cards | ✅ COMPLETE |
+
+## Pipeline Summary
+
+```
+Session Files → Watcher → Parser → Registry → TUI → Cognitive Router
+    ↓            ↓         ↓        ↓        ↓        ↓
+ JSON/JSONL   30s poll  Extract  SQLite  3-pane  Fallback chain
+```
+
+## Quick Reference
+
+| Aspect | Decision |
+|--------|----------|
+| **Channel** | Terminal (TUI via Textual) |
+| **Detection** | Heuristic fingerprinting по JSON структуре |
+| **Required Fields** | filepath, project_name, agent_type, status, summary |
+| **Execution** | Python 3.10+ CLI application |
+| **Delivery** | 3-pane TUI + AI chat interface |
+| **Config** | `~/.nexus/config.yaml`, `~/.nexus/chains.yaml` |
+
+## Session Sources
+
+| Agent | Path | Format |
+|-------|------|--------|
+| Codex | `~/.codex/sessions/2026/{MM}/{DD}/` | JSONL |
+| Qwen | `~/.qwen/projects/{project}/chats/` | JSONL |
+| Kimi | `~/.kimi/sessions/{session}/{turn}/` | JSONL |
+| Gemini | `~/.gemini/tmp/{hash}/chats/` | JSON |
+
+## Development Notes
+
+- [ ] Dry-run: Watcher polling можно отключить через `--no-watch`
+- [ ] Python 3.10+ required (Textual dependency)
+- [ ] Poetry для package management
+- [ ] rapidfuzz для fuzzy search
+- [ ] litellm для unified LLM API
+
+## Implementation
+
+See [trello-cards/BOARD.md](./trello-cards/BOARD.md) for:
+- **22 cards** (48 SP total)
+- Linear execution order: 01 → 22
+- Machine-friendly instructions
+- Max 4 SP per card
+
+## Phases
+
+| Phase | Cards | SP | Description |
+|-------|-------|----|-------------|
+| Phase 1 | 01-07 | 16 SP | Core Scaffolding (TUI + DB) |
+| Phase 2 | 08-15 | 18 SP | Ingestion & Stream |
+| Phase 3 | 16-22 | 14 SP | Cognitive Engine |
+
+---
+
+## Guardian Gate
+
+**SDD Package готова к реализации.**
+
+Для начала implementation:
+```bash
+# 1. Прочитать KICKOFF.md
+cat docs/sdd/artifact-nexus-sdd/trello-cards/KICKOFF.md
+
+# 2. Начать с Card 01
+cat docs/sdd/artifact-nexus-sdd/trello-cards/01-*.md
+```
+
+
+## FILE: requirements.md
+
+# Artifact Nexus - Functional Requirements
+
+> Status: COMPLETE | Last updated: February 17, 2026
+
+---
+
+## 1. Session Ingestion
+
+### 1.1 Session Sources
+
+- System MUST support 4 CLI agents: Codex, Qwen, Kimi, Gemini
+- System MUST read session files from standard paths:
+  - Codex: `~/.codex/sessions/2026/{MM}/{DD}/rollout-*.jsonl`
+  - Qwen: `~/.qwen/projects/{project}/chats/{session-id}.jsonl`
+  - Kimi: `~/.kimi/sessions/{session-id}/{turn-id}/context.jsonl`
+  - Gemini: `~/.gemini/tmp/{project-hash}/chats/session-*.json`
+
+### 1.2 Agent Fingerprinting
+
+- System MUST detect agent type from JSON structure:
+  - **Codex:** `session_meta`, `turn_context`, `event_msg` types
+  - **Qwen:** `type: system/user/assistant`, `sessionId`
+  - **Kimi:** `role: user/assistant/_checkpoint`
+  - **Gemini:** JSON file format (not JSONL), `session-*.json` pattern
+- System MUST use "unknown" as fallback for unrecognized formats
+
+### 1.3 Watcher Service
+
+- System MUST poll for new sessions every 30 seconds
+- System MUST support manual addition via `nexus add <path>`
+- System MUST NOT delete sessions (files are append-only)
+
+---
+
+## 2. Data Model
+
+### 2.1 SQLite Schema
+
+- System MUST have `sessions` table with columns:
+  - `id` (INTEGER PK), `filepath` (TEXT), `project_name` (TEXT)
+  - `project_root` (TEXT), `agent_type` (TEXT), `start_time` (DATETIME)
+  - `end_time` (DATETIME), `status` (TEXT), `summary` (TEXT), `title` (TEXT)
+  - `created_at` (DATETIME)
+- System MUST have `cognitive_audit` table for AI chat history:
+  - `id` (INTEGER PK), `session_ids` (TEXT), `user_query` (TEXT)
+  - `final_model` (TEXT), `chain_log` (TEXT), `created_at` (DATETIME)
+
+### 2.2 Session Summary
+
+- System MUST generate summary in format:
+  ```
+  [ACTION] Brief description | Files: file1.py, file2.js | Status
+  ```
+- System MUST extract title from first user prompt (60 chars max)
+- System MUST determine status: `success`, `failure`, `interrupted`
+
+---
+
+## 3. User Interface
+
+### 3.1 Three-Pane Layout
+
+- System MUST display 3-pane TUI:
+  - **Left (20%):** Filters (time range, agent type, status, search)
+  - **Center (45%):** Event stream with session cards
+  - **Right (35%):** Inspector (Details, Artifacts, Chat tabs)
+
+### 3.2 Session Card Format
+
+- System MUST render each session as 3-line card:
+  ```
+  [Icon] [Time Delta] [Project Path]
+  [White text] Summary of user intent
+  [Badges] Status | Agent | Model
+  ```
+
+### 3.3 Keyboard Navigation
+
+- System MUST support Vim-style navigation:
+  - `j/k` — Scroll stream up/down
+  - `Space` — Toggle selection (multi-session)
+  - `Enter` — Open session in Inspector
+  - `f` — Focus Filter Pane
+  - `c` — Clear all selections
+  - `/` — Trigger Search mode
+
+### 3.4 Multi-Session Selection
+
+- System MUST allow selecting multiple sessions (Space key)
+- System MUST support asking questions across selected sessions in Chat
+
+---
+
+## 4. Filtering
+
+### 4.1 Filter Types
+
+- System MUST support filtering by:
+  - **Time Range:** Last 24h, Last 3 Days, Last Week, Custom
+  - **Agent Type:** Codex, Qwen, Kimi, Gemini (checkboxes)
+  - **Status:** Success, Failed, Interrupted
+  - **Fuzzy Search:** Project names + Session titles
+
+### 4.2 Fuzzy Search
+
+- System MUST use `rapidfuzz` library for fuzzy matching
+- System MUST support partial matches (threshold: 60%+)
+
+---
+
+## 5. Cognitive Router
+
+### 5.1 Fallback Chain
+
+- System MUST support model fallback chain defined in `~/.nexus/chains.yaml`
+- System MUST retry next model ONLY on:
+  - Auth error (401, 403)
+  - Rate limit (429)
+  - Timeout
+  - Network error
+- System MUST NOT fallback if model responded (even if answer is bad)
+
+### 5.2 Configuration
+
+- System MUST load chains from `~/.nexus/chains.yaml`:
+  ```yaml
+  chains:
+    default:
+      - name: "fast_triage"
+        provider: "ollama"
+        model: "qwen2.5-coder:32b"
+        timeout: 15s
+      - name: "deep_analysis"
+        provider: "google"
+        model: "gemini-1.5-pro-latest"
+  ```
+
+### 5.3 Context Strategy
+
+- System MUST load full session content if tokens < limit
+- System MUST load "Heads & Tails" (first 2 + last 2 interactions) if tokens > limit
+
+---
+
+## 6. Non-Functional Requirements
+
+### 6.1 Performance
+
+- TUI launch: < 2 seconds
+- Filter response: < 500ms
+- Cognitive Router response: < 30s per model
+
+### 6.2 Security
+
+- System MUST NOT store API keys (use system credentials)
+- System MUST NOT transmit logs without explicit user query
+
+### 6.3 Localization
+
+- System MUST support Russian and English UI
+- System MUST read language preference from config
+
+---
+
+## 7. Out of Scope
+
+- Token count display (user has subscription)
+- Cost estimation (user has subscription)
+- Session deletion (files are append-only)
+- Real-time streaming (30s polling is sufficient)
+- Claude support (not in user's workflow)
+- Web UI (terminal-only)
+
+---
+
+## References
+
+- PRD: `/home/pets/temp/jsonl_dashboard/docs/PRD.md`
+- Interview Log: `/home/pets/temp/jsonl_dashboard/docs/raw_requirements/interview_log.md`
+- Raw Requirements: `/home/pets/temp/jsonl_dashboard/docs/raw_requirements/raw_requiremenst.md`
+
+
+## FILE: gaps.md
+
+# Artifact Nexus - Gaps & Interview Log
+
+> Status: ALL GAPS FILLED | Interview completed: February 17, 2026
+
+---
+
+## Interview Summary
+
+**Total Questions:** 9  
+**Critical Gaps:** 9  
+**Auto-filled:** 0  
+**up2u accepted:** 1  
+
+---
+
+## Gap Tracking
+
+### GAP-001: Problem Statement
+- **Question:** Какую проблему решает Artifact Nexus?
+- **Answer:** Разработчики работают с несколькими AI-агентами одновременно и теряют контекст между сессиями. Artifact Nexus даёт единую временную шкалу всех сессий + AI-поиск по ним.
+- **Status:** ✅ Filled
+- **Source:** user
+
+### GAP-002: Goals and Success Criteria
+- **Question:** Какие топ-3 цели успеха?
+- **Answer:** 
+  - (1) Единый view для всех CLI-агентов (Codex, Qwen, Kimi, Gemini)
+  - (2) Семантический поиск вместо ручного просмотра логов
+  - (3) AI-powered Q&A над историей сессий с automatic fallback
+- **Status:** ✅ Filled
+- **Source:** user
+
+### GAP-003: Scope and Non-Goals
+- **Question:** Что входит в scope, а что НЕ входит?
+- **Answer:** 
+  - **In scope:** TUI (3 панели), Watcher (polling 30s), Registry (SQLite), Cognitive Router (fallback chain), парсинг 4 CLI
+  - **Out of scope:** Token count display, cost estimation, session deletion, real-time streaming, Claude support
+- **Status:** ✅ Filled
+- **Source:** user
+
+### GAP-004: User Roles
+- **Question:** Какие есть роли пользователей?
+- **Answer:** Primary: Solo developer, работающий с 2+ AI-агентами параллельно. Single-user local app.
+- **Status:** ✅ Filled
+- **Source:** user
+
+### GAP-005: Core Flows
+- **Question:** Топ-3 user journeys?
+- **Answer:** 
+  - (1) Watch: Открыть TUI → увидеть ленту → отфильтровать
+  - (2) Inspect: Выбрать сессию → summary → детали
+  - (3) Chat: Задать вопрос → Cognitive Router отвечает
+  - **Дополнение:** Multi-Session Chat — выбрать 3 сессии и задать вопрос по всем
+- **Status:** ✅ Filled
+- **Source:** user + addition
+
+### GAP-006: Data Model
+- **Question:** Что нужно создавать/читать/обновлять в БД?
+- **Answer:** 
+  - **sessions:** filepath, project_name, agent_type, start_time, end_time, status, summary, title
+  - **cognitive_audit:** session_ids, user_query, final_model, chain_log
+- **Status:** ✅ Filled
+- **Source:** user
+
+### GAP-007: Integrations
+- **Question:** Какие CLI-агенты и API нужны?
+- **Answer:** 
+  - **CLI Agents:** Codex, Qwen, Kimi, Gemini
+  - **LLM Providers:** Ollama (local), Google (Gemini API), Anthropic (Claude API)
+- **Status:** ✅ Filled
+- **Source:** user
+
+### GAP-008: Non-Functional Requirements
+- **Question:** Какие NFR критичны?
+- **Answer:** 
+  - **Performance:** TUI launch < 2s, filter < 500ms, Router < 30s
+  - **Reliability:** Watcher 30s polling, graceful fallback
+  - **Security:** Не хранить API keys, не передавать логи без запроса
+  - **Localization:** Russian/English
+- **Status:** ✅ Filled
+- **Source:** up2u (user accepted suggested)
+
+### GAP-009: Constraints and Dependencies
+- **Question:** Есть ли известные ограничения?
+- **Answer:** 
+  - **Tech:** Python 3.10+, Textual, SQLite
+  - **Deployment:** Local-only, terminal CLI
+  - **Dependencies:** Poetry, rapidfuzz
+  - **Timeline:** No deadline, single-phase delivery
+- **Status:** ✅ Filled
+- **Source:** user
+
+---
+
+## Requirements Coverage
+
+| Bucket | Status |
+|--------|--------|
+| Problem statement | ✅ |
+| Goals/success criteria | ✅ |
+| Scope/non-goals | ✅ |
+| Users/roles | ✅ |
+| Core flows | ✅ |
+| Data model | ✅ |
+| Integrations | ✅ |
+| Non-functional | ✅ |
+| Constraints | ✅ |
+
+**Coverage:** 9/9 = 100%
+
+---
+
+## Assumptions
+
+No critical assumptions. All items confirmed via interview.
+
+---
+
+## Confidence Assessment
+
+**Formula:** (Requirements Covered / Total Requirements) × 100%  
+**Score:** 9/9 × 100% = **100%**  
+**Target:** 95%  
+**Status:** ✅ PASSED
+
+---
+
+## Multi-Session Chat (Added Requirement)
+
+During GAP-005, user added important requirement:
+
+> "i need to be able ask question to more then one sessions, select for example 3 sesions and ask questions"
+
+This was incorporated into:
+- requirements.md (Section 3.4)
+- ui-flow.md (Flow 3)
+- trello-cards (Card 14: Multi-Session Selection)
+
+---
+
+**Document Status:** ALL GAPS FILLED — READY FOR IMPLEMENTATION
+
+
+## FILE: trello-cards/KICKOFF.md
+
+# Artifact Nexus - KICKOFF
+
+> **Mission:** Build Artifact Nexus — терминальная платформа для observability AI-агентов с Cognitive Router.
+
+**Status:** READY FOR IMPLEMENTATION  
+**Cards:** 22 (48 SP total)  
+**Phases:** 3 (Scaffolding → Ingestion → Cognitive)
+
+---
+
+## Quick Start
+
+```bash
+# 1. Read this file
+cat docs/sdd/artifact-nexus-sdd/trello-cards/KICKOFF.md
+
+# 2. Start with Card 01
+cat docs/sdd/artifact-nexus-sdd/trello-cards/01-*.md
+
+# 3. Execute cards in order (01 → 22)
+```
+
+---
+
+## Execution Rules
+
+1. **Linear order:** Complete cards 01 → 02 → ... → 22
+2. **Max 4 SP per card:** If bigger, split it
+3. **Each card independently testable:** See manual-e2e-test.md
+4. **Update state.json after each card:** Mark completed
+5. **No implementation before SDD approval:** Guardian Gate passed
+
+---
+
+## Phase Breakdown
+
+### Phase 1: Core Scaffolding (Cards 01-07, 16 SP)
+
+**Goal:** Get TUI running with dummy data.
+
+| Card | Title | SP |
+|------|-------|----|
+| 01 | Project Bootstrap | 2 |
+| 02 | Database Schema | 3 |
+| 03 | DatabaseManager Class | 3 |
+| 04 | Static 3-Pane Layout | 3 |
+| 05 | Filter Pane Component | 2 |
+| 06 | Session Card Component | 2 |
+| 07 | Inspector Pane Shell | 1 |
+
+**Exit Criteria:**
+- TUI launches and shows 3-pane layout
+- Dummy sessions visible in Center pane
+- Filters clickable (no logic yet)
+- Inspector opens (empty tabs)
+
+---
+
+### Phase 2: Ingestion & Stream (Cards 08-15, 18 SP)
+
+**Goal:** Populate Center Pane with real data.
+
+| Card | Title | SP |
+|------|-------|----|
+| 08 | Codex JSONL Parser | 3 |
+| 09 | Qwen JSONL Parser | 2 |
+| 10 | Kimi JSONL Parser | 2 |
+| 11 | Gemini JSON Parser | 2 |
+| 12 | SessionScanner | 3 |
+| 13 | Watcher Service (30s polling) | 2 |
+| 14 | Filter Logic (SQL queries) | 2 |
+| 15 | Fuzzy Search (rapidfuzz) | 2 |
+
+**Exit Criteria:**
+- Real sessions from all 4 CLI agents visible
+- Watcher polls every 30s
+- Filters work (time, agent, status)
+- Fuzzy search finds sessions
+
+---
+
+### Phase 3: Cognitive Engine (Cards 16-22, 14 SP)
+
+**Goal:** Enable "Chat with Context".
+
+| Card | Title | SP |
+|------|-------|----|
+| 16 | chains.yaml Parser | 2 |
+| 17 | CognitiveRouter Class | 3 |
+| 18 | Fallback Chain Logic | 3 |
+| 19 | Chat UI Component | 2 |
+| 20 | Context Loader (full vs heads&tails) | 2 |
+| 21 | Multi-Session Selection | 1 |
+| 22 | cognitive_audit Table + Logging | 1 |
+
+**Exit Criteria:**
+- Chat tab functional
+- Questions sent to Cognitive Router
+- Fallback chain works (auth/timeout/429)
+- Multi-session chat works
+- Audit log recorded
+
+---
+
+## Complexity Assessment
+
+| Factor | Points |
+|--------|--------|
+| New database table (2 tables) | +4 |
+| External integration (4 CLI + 3 LLM) | +28 |
+| New UI component (3-pane TUI) | +6 |
+| Real-time features (Watcher) | +3 |
+| **TOTAL** | **41 points** |
+
+**Score 41 > 30** → Split into phases (22 cards, 48 SP).
+
+---
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `docs/sdd/artifact-nexus-sdd/requirements.md` | Functional requirements |
+| `docs/sdd/artifact-nexus-sdd/ui-flow.md` | UI specifications |
+| `docs/sdd/artifact-nexus-sdd/manual-e2e-test.md` | Test scenarios |
+| `~/.nexus/config.yaml` | App configuration |
+| `~/.nexus/chains.yaml` | Cognitive Router chains |
+| `~/.nexus/nexus.db` | SQLite registry |
+
+---
+
+## Testing Strategy
+
+1. **Unit tests:** pytest for parsers, DatabaseManager, CognitiveRouter
+2. **Integration tests:** Watcher + Scanner end-to-end
+3. **E2E tests:** manual-e2e-test.md scenarios
+4. **Dry-run:** `nexus --no-watch` for deterministic testing
+
+---
+
+## Next Steps
+
+1. Read Card 01: Project Bootstrap
+2. Execute cards in order
+3. Update state.json after each card
+4. Run E2E tests after each phase
+
+**Start now:** `cat docs/sdd/artifact-nexus-sdd/trello-cards/01-project-bootstrap.md`
+
+
+## FILE: trello-cards/BOARD.md
+
+# Artifact Nexus - Trello Board
+
+> **Execution Order:** Linear (01 → 22)  
+> **Total Cards:** 22  
+> **Total SP:** 48
+
+---
+
+## Pipeline Visualization
+
+```
+Phase 1: Core Scaffolding (16 SP)
+┌────┬────┬────┬────┬────┬────┬────┐
+│ 01 │ 02 │ 03 │ 04 │ 05 │ 06 │ 07 │
+│ 2  │ 3  │ 3  │ 3  │ 2  │ 2  │ 1  │
+├────┼────┼────┼────┼────┼────┼────┤
+│BOOT│ DB │ DB │TUI │FILT│CARD│INSP│
+└────┴────┴────┴────┴────┴────┴────┘
+              ↓
+Phase 2: Ingestion & Stream (18 SP)
+┌────┬────┬────┬────┬────┬────┬────┬────┐
+│ 08 │ 09 │ 10 │ 11 │ 12 │ 13 │ 14 │ 15 │
+│ 3  │ 2  │ 2  │ 2  │ 3  │ 2  │ 2  │ 2  │
+├────┼────┼────┼────┼────┼────┼────┼────┤
+│CODX│QWEN│KIMI│GEMN│SCAN│WTCH│FILTR│FUZZ│
+└────┴────┴────┴────┴────┴────┴────┴────┘
+              ↓
+Phase 3: Cognitive Engine (14 SP)
+┌────┬────┬────┬────┬────┬────┬────┐
+│ 16 │ 17 │ 18 │ 19 │ 20 │ 21 │ 22 │
+│ 2  │ 3  │ 3  │ 2  │ 2  │ 1  │ 1  │
+├────┼────┼────┼────┼────┼────┼────┤
+│CNFG│ROUT│FALL│CHAT│CNTX│MULT│AUDT│
+└────┴────┴────┴────┴────┴────┴────┘
+```
+
+---
+
+## Card Index
+
+### Phase 1: Core Scaffolding
+
+| # | File | Title | SP | Status |
+|---|------|-------|----|--------|
+| 01 | [01-project-bootstrap.md](./01-project-bootstrap.md) | Project Bootstrap | 2 | ☐ Todo |
+| 02 | [02-database-schema.md](./02-database-schema.md) | Database Schema Design | 3 | ☐ Todo |
+| 03 | [03-database-manager.md](./03-database-manager.md) | DatabaseManager Class | 3 | ☐ Todo |
+| 04 | [04-static-layout.md](./04-static-layout.md) | Static 3-Pane Layout | 3 | ☐ Todo |
+| 05 | [05-filter-pane.md](./05-filter-pane.md) | Filter Pane Component | 2 | ☐ Todo |
+| 06 | [06-session-card.md](./06-session-card.md) | Session Card Component | 2 | ☐ Todo |
+| 07 | [07-inspector-pane.md](./07-inspector-pane.md) | Inspector Pane Shell | 1 | ☐ Todo |
+
+### Phase 2: Ingestion & Stream
+
+| # | File | Title | SP | Status |
+|---|------|-------|----|--------|
+| 08 | [08-codex-parser.md](./08-codex-parser.md) | Codex JSONL Parser | 3 | ☐ Todo |
+| 09 | [09-qwen-parser.md](./09-qwen-parser.md) | Qwen JSONL Parser | 2 | ☐ Todo |
+| 10 | [10-kimi-parser.md](./10-kimi-parser.md) | Kimi JSONL Parser | 2 | ☐ Todo |
+| 11 | [11-gemini-parser.md](./11-gemini-parser.md) | Gemini JSON Parser | 2 | ☐ Todo |
+| 12 | [12-session-scanner.md](./12-session-scanner.md) | SessionScanner | 3 | ☐ Todo |
+| 13 | [13-watcher-service.md](./13-watcher-service.md) | Watcher Service (30s) | 2 | ☐ Todo |
+| 14 | [14-filter-logic.md](./14-filter-logic.md) | Filter Logic (SQL) | 2 | ☐ Todo |
+| 15 | [15-fuzzy-search.md](./15-fuzzy-search.md) | Fuzzy Search (rapidfuzz) | 2 | ☐ Todo |
+
+### Phase 3: Cognitive Engine
+
+| # | File | Title | SP | Status |
+|---|------|-------|----|--------|
+| 16 | [16-chains-config.md](./16-chains-config.md) | chains.yaml Parser | 2 | ☐ Todo |
+| 17 | [17-cognitive-router.md](./17-cognitive-router.md) | CognitiveRouter Class | 3 | ☐ Todo |
+| 18 | [18-fallback-chain.md](./18-fallback-chain.md) | Fallback Chain Logic | 3 | ☐ Todo |
+| 19 | [19-chat-ui.md](./19-chat-ui.md) | Chat UI Component | 2 | ☐ Todo |
+| 20 | [20-context-loader.md](./20-context-loader.md) | Context Loader | 2 | ☐ Todo |
+| 21 | [21-multi-session.md](./21-multi-session.md) | Multi-Session Selection | 1 | ☐ Todo |
+| 22 | [22-audit-logging.md](./22-audit-logging.md) | Audit Logging | 1 | ☐ Todo |
+
+---
+
+## Progress Tracking
+
+| Phase | Cards | Done | SP Done | % Complete |
+|-------|-------|------|---------|------------|
+| Phase 1 | 7 | 0 | 0/16 | 0% |
+| Phase 2 | 8 | 0 | 0/18 | 0% |
+| Phase 3 | 7 | 0 | 0/14 | 0% |
+| **TOTAL** | **22** | **0** | **0/48** | **0%** |
+
+---
+
+## Dependencies
+
+```
+01 → 02 → 03 → 04 → 05 → 06 → 07  (Phase 1: sequential)
+                    ↓
+08 → 09 → 10 → 11 → 12 → 13 → 14 → 15  (Phase 2: parsers parallel, rest sequential)
+                              ↓
+16 → 17 → 18 → 19 → 20 → 21 → 22  (Phase 3: sequential)
+```
+
+---
+
+## Definition of Done (per card)
+
+- [ ] Code implemented
+- [ ] Type checking passes
+- [ ] No lint errors
+- [ ] Unit tests written (if applicable)
+- [ ] state.json updated
+- [ ] Git committed (auto-daemon or manual)
+
+---
+
+**Start with Card 01. Update state.json after each card.**
+
