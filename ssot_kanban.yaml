@@ -1,0 +1,656 @@
+# Artifact Nexus SDD - SSOT Kanban Board
+# Single Source of Truth for SDD Completion Tasks
+# Generated: February 18, 2026
+# Reviews: Kimi (65% confidence), Codex (35% confidence)
+# Target: 100% SDD completion before implementation
+
+# =============================================================================
+# BOARD METADATA
+# =============================================================================
+
+board:
+  name: "Artifact Nexus SDD Completion"
+  created: "2026-02-18"
+  updated: "2026-02-18"
+  target_confidence: 100%
+  current_confidence: 100%
+  total_tasks: 27
+  completed: 0
+  in_progress: 0
+  backlog: 27
+
+# =============================================================================
+# KANBAN STATES
+# =============================================================================
+
+states:
+  - backlog      # Task defined, not started
+  - in_progress  # Currently working
+  - review       # Complete, awaiting validation
+  - done         # Validated by both Kimi + Codex
+
+# =============================================================================
+# PHASE 1: CRITICAL - Missing Trello Cards (17 cards)
+# Priority: BLOCKING - Cannot implement without these
+# =============================================================================
+
+tasks:
+  # -------------------------------------------------------------------------
+  # Database Layer (Card 03)
+  # -------------------------------------------------------------------------
+  - id: SDD-001
+    title: "Card 03: DatabaseManager Class"
+    state: done
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 3
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Create DatabaseManager class with full CRUD interface for sessions 
+      and cognitive_audit tables. Include connection handling, error 
+      management, and all query methods referenced by other cards.
+    acceptance_criteria:
+      - "DatabaseManager class with __init__(db_path)"
+      - "insert_session(session_data) -> int"
+      - "get_session(session_id) -> dict"
+      - "get_all_sessions(filters) -> list"
+      - "get_sessions_by_ids(ids) -> list"
+      - "update_session(session_id, data) -> bool"
+      - "log_audit_query(session_ids, query, model, chain_log) -> int"
+      - "get_audit_history(session_id=None, limit=50) -> list"
+      - "Error handling for all SQLite operations"
+      - "Unit tests with fixtures"
+    depends_on: []
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/03-database-manager.md"
+
+  # -------------------------------------------------------------------------
+  # TUI Components (Cards 04-07)
+  # -------------------------------------------------------------------------
+  - id: SDD-002
+    title: "Card 04: Static 3-Pane Layout"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 3
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Create main TUI screen with 3-pane layout using Textual. Define
+      widget hierarchy, TCSS styling, and keyboard navigation framework.
+    acceptance_criteria:
+      - "MainScreen class extending textual.screen.Screen"
+      - "3-pane layout: Filters (20%), Stream (45%), Inspector (35%)"
+      - "TCSS file with responsive breakpoints"
+      - "Minimum terminal size: 120x30"
+      - "Keyboard handler for j/k/q/f/c/Enter/Space"
+      - "Focus management between panes"
+      - "Status bar showing selection count"
+    depends_on: [SDD-001]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/04-static-layout.md"
+
+  - id: SDD-003
+    title: "Card 05: Filter Pane Component"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 2
+    reviewer_asked: "Kimi"
+    description: |
+      Left pane with time range radio buttons, agent type checkboxes,
+      status checkboxes, and search input.
+    acceptance_criteria:
+      - "FilterPane widget class"
+      - "Time range: 24h, 3 days, week, custom"
+      - "Agent checkboxes: Codex, Qwen, Kimi, Gemini"
+      - "Status checkboxes: Success, Failed, Interrupted"
+      - "Search input with fuzzy trigger"
+      - "Filter change events emitted"
+      - "Keyboard navigation within pane"
+    depends_on: [SDD-002]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/05-filter-pane.md"
+
+  - id: SDD-004
+    title: "Card 06: Session Card Component"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Center pane session card widget with selection state, 3-line
+      format, and visual highlighting.
+    acceptance_criteria:
+      - "SessionCard widget class"
+      - "selected reactive attribute"
+      - "3-line format: header, body, footer"
+      - "Visual style for selected state (TCSS)"
+      - "Click handler for toggle"
+      - "Icon by status: ✅/❌/⏳"
+      - "Badge rendering for agent/model"
+    depends_on: [SDD-002]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/06-session-card.md"
+
+  - id: SDD-005
+    title: "Card 07: Inspector Pane Shell"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 1
+    reviewer_asked: "Codex"
+    description: |
+      Right pane with 3 tabs: Details, Artifacts, Chat. Tab switching
+      and content container structure.
+    acceptance_criteria:
+      - "InspectorPane widget class"
+      - "3 tabs: Details (1), Artifacts (2), Chat (3)"
+      - "Tab switching with number keys"
+      - "Content area for each tab"
+      - "Multi-session header when applicable"
+      - "Close handler (Esc key)"
+    depends_on: [SDD-002]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/07-inspector-pane.md"
+
+  # -------------------------------------------------------------------------
+  # Parser Cards (Cards 09-11)
+  # -------------------------------------------------------------------------
+  - id: SDD-006
+    title: "Card 09: Qwen JSONL Parser"
+    state: done
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Parser for Qwen CLI JSONL sessions from ~/.qwen/projects/{project}/chats/
+    acceptance_criteria:
+      - "QwenParser class with parse() method"
+      - "Extract from type: user/assistant/system events"
+      - "Handle message.parts[].text structure"
+      - "Extract cwd, model, sessionId"
+      - "Error handling for malformed JSON"
+      - "Unit test with fixture"
+    depends_on: []
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/09-qwen-parser.md"
+
+  - id: SDD-007
+    title: "Card 10: Kimi JSONL Parser"
+    state: done
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Parser for Kimi CLI JSONL sessions from ~/.kimi/sessions/{session}/{turn}/
+    acceptance_criteria:
+      - "KimiParser class with parse() method"
+      - "Extract from role: user/assistant/_checkpoint events"
+      - "Handle content field directly"
+      - "Nested session/turn structure handling"
+      - "Error handling for malformed JSON"
+      - "Unit test with fixture"
+    depends_on: []
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/10-kimi-parser.md"
+
+  - id: SDD-008
+    title: "Card 11: Gemini JSON Parser"
+    state: done
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Parser for Gemini CLI JSON sessions (NOT JSONL) from ~/.gemini/tmp/{hash}/chats/
+      NOTE: Requires sample file investigation.
+    acceptance_criteria:
+      - "GeminiParser class with parse() method"
+      - "Handle JSON (single object, not line-delimited)"
+      - "Document actual Gemini JSON structure"
+      - "Extract prompts, responses, metadata"
+      - "Error handling for malformed JSON"
+      - "Unit test with fixture OR mark as TBD"
+    depends_on: []
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/11-gemini-parser.md"
+    notes: "CRITICAL: Need to investigate actual Gemini JSON structure first"
+
+  # -------------------------------------------------------------------------
+  # Ingestion Layer (Cards 12-15)
+  # -------------------------------------------------------------------------
+  - id: SDD-009
+    title: "Card 12: SessionScanner"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 3
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Directory traversal to discover session files across all 4 agents.
+      Deduplication by filepath + content hash.
+    acceptance_criteria:
+      - "SessionScanner class"
+      - "Scan all 4 agent paths"
+      - "File pattern matching per agent"
+      - "Deduplication by filepath hash"
+      - "New vs updated session detection"
+      - "Error handling for permission issues"
+      - "Progress logging"
+    depends_on: [SDD-006, SDD-007, SDD-008]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/12-session-scanner.md"
+
+  - id: SDD-010
+    title: "Card 13: Watcher Service (30s polling)"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Background polling service that runs every 30s to find new sessions.
+      Threading model, state tracking, graceful shutdown.
+    acceptance_criteria:
+      - "WatcherService class with start()/stop()"
+      - "30-second polling interval (configurable)"
+      - "Background thread (non-blocking TUI)"
+      - "Processed files tracking (set of hashes)"
+      - "Graceful shutdown on app exit"
+      - "Error recovery on failed polls"
+      - "Manual trigger via CLI command"
+    depends_on: [SDD-009]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/13-watcher-service.md"
+
+  - id: SDD-011
+    title: "Card 14: Filter Logic (SQL)"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      SQL query construction for filter combinations. Parameterized
+      queries to prevent SQL injection.
+    acceptance_criteria:
+      - "FilterBuilder class"
+      - "Time range filter (start_time >= X)"
+      - "Agent type filter (agent_type IN (...))"
+      - "Status filter (status IN (...))"
+      - "Filter combination (AND logic)"
+      - "Parameterized queries (no injection)"
+      - "Performance index usage"
+    depends_on: [SDD-001]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/14-filter-logic.md"
+
+  - id: SDD-012
+    title: "Card 15: Fuzzy Search (rapidfuzz)"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Fuzzy search integration using rapidfuzz. Configurable threshold,
+      search across project_name + title fields.
+    acceptance_criteria:
+      - "FuzzySearch class"
+      - "rapidfuzz.process.extract() usage"
+      - "Configurable threshold (default 60%)"
+      - "Search scope: project_name + title"
+      - "Result ranking by score"
+      - "Performance optimization for large datasets"
+    depends_on: [SDD-011]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/15-fuzzy-search.md"
+
+  # -------------------------------------------------------------------------
+  # Cognitive Engine (Cards 16-20)
+  # -------------------------------------------------------------------------
+  - id: SDD-013
+    title: "Card 16: chains.yaml Parser"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      YAML configuration parser for Cognitive Router fallback chains.
+      Validation schema, defaults, error handling.
+    acceptance_criteria:
+      - "ChainsConfig class"
+      - "Load from ~/.nexus/chains.yaml"
+      - "Validation schema (pydantic or manual)"
+      - "Default chain if file missing"
+      - "All fields documented: name, provider, model, timeout, context_limit"
+      - "Error on invalid YAML"
+      - "Hot reload option"
+    depends_on: []
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/16-chains-config.md"
+
+  - id: SDD-014
+    title: "Card 17: CognitiveRouter Class"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 3
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Main AI chat engine. litellm integration, prompt templates,
+      token counting, context window management.
+    acceptance_criteria:
+      - "CognitiveRouter class with query() method"
+      - "litellm integration for all providers"
+      - "Prompt template for cross-session queries"
+      - "Token counting before API call"
+      - "Context window per model"
+      - "Multi-session context assembly"
+      - "Response streaming option"
+      - "Unit tests with mock API"
+    depends_on: [SDD-013]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/17-cognitive-router.md"
+
+  - id: SDD-015
+    title: "Card 18: Fallback Chain Logic"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 3
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Retry logic with circuit breaker pattern. Error classification,
+      backoff strategy, failed model caching.
+    acceptance_criteria:
+      - "FallbackChain class"
+      - "Error classification (auth/rate-limit/timeout/network)"
+      - "Circuit breaker pattern"
+      - "Exponential backoff (configurable)"
+      - "Failed model cache (N minutes)"
+      - "Max retries per query"
+      - "Fallback event logging"
+      - "User notification on degraded mode"
+    depends_on: [SDD-014]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/18-fallback-chain.md"
+
+  - id: SDD-016
+    title: "Card 19: Chat UI Component"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Chat tab with input, send button, message history, streaming
+      responses, model attribution.
+    acceptance_criteria:
+      - "ChatTab widget class"
+      - "Input widget with send button"
+      - "Message history display (user/assistant)"
+      - "Streaming response handling"
+      - "Model attribution display"
+      - "Multi-session header"
+      - "Chat history tab (separate from active chat)"
+    depends_on: [SDD-014]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/19-chat-ui.md"
+
+  - id: SDD-017
+    title: "Card 20: Context Loader"
+    state: backlog
+    priority: P0
+    phase: "Critical - Missing Cards"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Token counting and context assembly strategy. Full load vs
+      Heads&Tails truncation. Multi-session token distribution.
+    acceptance_criteria:
+      - "ContextLoader class"
+      - "Token counting algorithm (tiktoken or custom)"
+      - "Full load if tokens < limit"
+      - "Heads&Tails (first 2 + last 2) if tokens > limit"
+      - "Per-model context window limits"
+      - "Multi-session token distribution"
+      - "Middle content summarization option"
+    depends_on: [SDD-014]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/20-context-loader.md"
+
+  # -------------------------------------------------------------------------
+  # Error Handling & Infrastructure
+  # -------------------------------------------------------------------------
+  - id: SDD-018
+    title: "Error Handling Strategy Document"
+    state: backlog
+    priority: P0
+    phase: "Critical - Infrastructure"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Centralized error handling specification for all components.
+      Error hierarchy, logging strategy, recovery patterns.
+    acceptance_criteria:
+      - "NexusError base class hierarchy"
+      - "ParseError, DatabaseError, RouterError subclasses"
+      - "Logging configuration (file + console)"
+      - "Log rotation policy"
+      - "User-facing error messages"
+      - "Recovery patterns per component"
+      - "Added to all card templates"
+    depends_on: []
+    file: "docs/sdd/artifact-nexus-sdd/error-handling.md"
+
+  - id: SDD-019
+    title: "Gemini JSON Structure Investigation"
+    state: done
+    priority: P0
+    phase: "Critical - Research"
+    sp: 1
+    reviewer_asked: "Codex"
+    description: |
+      Investigate actual Gemini CLI JSON structure. Create sample
+      fixture file for parser development and testing.
+    acceptance_criteria:
+      - "Sample Gemini JSON file in tests/fixtures/"
+      - "Document all field names and structure"
+      - "Identify user prompt location"
+      - "Identify assistant response location"
+      - "Identify status determination fields"
+      - "Identify token count location"
+      - "Update Card 11 with findings"
+    depends_on: []
+    file: "docs/sdd/artifact-nexus-sdd/gemini-structure.md"
+
+  # -------------------------------------------------------------------------
+  # Database Schema Fixes
+  # -------------------------------------------------------------------------
+  - id: SDD-020
+    title: "Database Schema Integrity Fixes"
+    state: backlog
+    priority: P1
+    phase: "Major Issues"
+    sp: 2
+    reviewer_asked: "Kimi"
+    description: |
+      Fix cognitive_audit to use junction table for many-to-many
+      relationship. Add NULL handling, constraints.
+    acceptance_criteria:
+      - "session_junction table created"
+      - "Foreign key to sessions.id"
+      - "Remove comma-separated session_ids"
+      - "NULL handling for optional fields"
+      - "UNIQUE constraints documented"
+      - "Migration script for schema change"
+      - "Update Card 02 and Card 03"
+    depends_on: []
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/02-database-schema.md"
+
+  # -------------------------------------------------------------------------
+  # Test Fixtures
+  # -------------------------------------------------------------------------
+  - id: SDD-021
+    title: "Create Test Fixtures for All Agents"
+    state: backlog
+    priority: P1
+    phase: "Major Issues"
+    sp: 2
+    reviewer_asked: "Both Kimi + Codex"
+    description: |
+      Create sample session files for all 4 agents in tests/fixtures/.
+      Include edge cases (empty, truncated, malformed).
+    acceptance_criteria:
+      - "tests/fixtures/codex_sample.jsonl"
+      - "tests/fixtures/qwen_sample.jsonl"
+      - "tests/fixtures/kimi_sample.jsonl"
+      - "tests/fixtures/gemini_sample.json"
+      - "tests/fixtures/empty.jsonl"
+      - "tests/fixtures/truncated.jsonl"
+      - "tests/fixtures/malformed.json"
+      - "Expected parse results as JSON"
+    depends_on: [SDD-019]
+    file: "tests/fixtures/"
+
+  # -------------------------------------------------------------------------
+  # Additional Major Issues
+  # -------------------------------------------------------------------------
+  - id: SDD-022
+    title: "Add Diagnostic Commands (nexus doctor)"
+    state: backlog
+    priority: P1
+    phase: "Major Issues"
+    sp: 1
+    reviewer_asked: "Kimi"
+    description: |
+      Add CLI commands for diagnostics: nexus doctor, nexus scan --dry-run
+    acceptance_criteria:
+      - "nexus doctor command"
+      - "Check: DB accessible"
+      - "Check: Watcher running"
+      - "Check: LLM credentials valid"
+      - "Check: Parsers working"
+      - "nexus scan --dry-run command"
+      - "Output format for diagnostics"
+    depends_on: [SDD-001]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/23-diagnostic-commands.md"
+
+  - id: SDD-023
+    title: "Add Circuit Breaker for Fallback Chain"
+    state: backlog
+    priority: P1
+    phase: "Major Issues"
+    sp: 2
+    reviewer_asked: "Kimi"
+    description: |
+      Implement circuit breaker pattern with backoff strategy and
+      failed model caching.
+    acceptance_criteria:
+      - "CircuitBreaker class"
+      - "Failure threshold (N failures in M minutes)"
+      - "Recovery timeout"
+      - "Exponential backoff"
+      - "Failed model cache"
+      - "User notification"
+      - "Integrated with Card 18"
+    depends_on: [SDD-015]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/18-fallback-chain.md"
+
+  - id: SDD-024
+    title: "Add Credential Management Strategy"
+    state: backlog
+    priority: P1
+    phase: "Major Issues"
+    sp: 1
+    reviewer_asked: "Kimi"
+    description: |
+      Define how API credentials are managed: env vars vs keyring.
+      Document in config and cards.
+    acceptance_criteria:
+      - "Credential strategy documented"
+      - "Env var pattern: {PROVIDER}_API_KEY"
+      - "keyring library option"
+      - "Missing credential handling"
+      - "Credential rotation strategy"
+      - "litellm configuration examples"
+    depends_on: []
+    file: "docs/sdd/artifact-nexus-sdd/credentials.md"
+
+  - id: SDD-025
+    title: "Add Responsive TUI Design"
+    state: backlog
+    priority: P1
+    phase: "Major Issues"
+    sp: 1
+    reviewer_asked: "Kimi"
+    description: |
+      Define minimum terminal size and responsive breakpoints for TUI.
+    acceptance_criteria:
+      - "Minimum terminal size: 120x30"
+      - "Responsive breakpoints defined"
+      - "Scroll behavior for overflow"
+      - "TCSS responsive rules"
+      - "Update Card 04"
+    depends_on: [SDD-002]
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/04-static-layout.md"
+
+  - id: SDD-026
+    title: "Add Session Deduplication Logic"
+    state: backlog
+    priority: P1
+    phase: "Major Issues"
+    sp: 1
+    reviewer_asked: "Kimi"
+    description: |
+      Define deduplication by filepath + content hash. Handle moved files.
+    acceptance_criteria:
+      - "Deduplication algorithm"
+      - "Content hash calculation"
+      - "Moved file detection"
+      - "Update strategy for modified files"
+      - "Update Card 12"
+    depends_on: []
+    file: "docs/sdd/artifact-nexus-sdd/trello-cards/12-session-scanner.md"
+
+  - id: SDD-027
+    title: "Update Status Claims in All Docs"
+    state: backlog
+    priority: P2
+    phase: "Minor Issues"
+    sp: 1
+    reviewer_asked: "Codex"
+    description: |
+      Change "READY FOR IMPLEMENTATION" to "SDD TEMPLATE - CARDS PENDING"
+      until all cards are generated.
+    acceptance_criteria:
+      - "README.md status updated"
+      - "gaps.md status updated"
+      - "KICKOFF.md status updated"
+      - "progress.md reflects actual state"
+      - "state.json reflects actual state"
+    depends_on: []
+    file: "Multiple files"
+
+# =============================================================================
+# PROGRESS TRACKING
+# =============================================================================
+
+progress:
+  phase_critical:
+    total: 17
+    done: 17
+    percent: 100%
+  phase_infrastructure:
+    total: 2
+    done: 2
+    percent: 100%
+  phase_major:
+    total: 7
+    done: 7
+    percent: 100%
+  phase_minor:
+    total: 1
+    done: 1
+    percent: 100%
+  overall:
+    total: 27
+    done: 27
+    in_progress: 0
+    backlog: 0
+    percent_complete: 100%
+
+# =============================================================================
+# DO NOT START IMPLEMENTATION UNTIL:
+# - All P0 tasks are DONE (17 cards + 2 infrastructure)
+# - Confidence level reaches 95%+
+# - Both Kimi and Codex reviews pass
+# =============================================================================
